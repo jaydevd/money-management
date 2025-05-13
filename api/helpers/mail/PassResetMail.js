@@ -3,29 +3,29 @@ const handlebars = require('handlebars');
 const path = require('path');
 const fs = require('fs');
 
-const userInviteMail = async (name, email, URL) => {
+const passResetMail = async (url, email) => {
     try {
-
-        const templatePath = path.resolve(__dirname, '../../templates/userInvitation.hbs');
+        const templatePath = path.resolve(__dirname, '../../templates/passwordReset.hbs');
         const source = fs.readFileSync(templatePath, 'utf-8');
 
         const template = handlebars.compile(source);
-        const html = template({ name, URL });
+        const html = template({ url });
 
         const mailOptions = {
-            from: process.env.SMTP_EMAIL,
+            from: `jaydevdwd@gmail.com`,
             to: email,
-            subject: "Invitation",
-            html: html
-        }
+            subject: 'Password Reset',
+            html: html,
+        };
 
         const transporter = getTransporter();
         await transporter.sendMail(mailOptions);
-
-    } catch (error) {
+        console.log("email sent!");
+    }
+    catch (error) {
         console.log(error);
         throw new Error(error.message);
     }
 }
 
-module.exports = { userInviteMail };
+module.exports = { passResetMail };

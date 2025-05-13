@@ -1,14 +1,14 @@
 const express = require('express');
 const { makeTransaction, listTransactions } = require('../../controller/transaction/TransactionController');
-const { isUser } = require('../../middleware/isAdmin');
+const { isAdmin } = require('../../middleware/isAdmin');
 const router = express.Router();
 
 router.route('/new')
-    .all(isUser)
+    .all(isAdmin)
     .post(makeTransaction);
 
 router.route('/list')
-    .all(isUser)
+    .all(isAdmin)
     .post(listTransactions);
 
 module.exports = { transactionRoutes: router };

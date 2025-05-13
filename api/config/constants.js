@@ -28,14 +28,8 @@ const HTTP_STATUS_CODES = {
     },
 }
 
-const FORGOT_PASSWORD_URL = {
-    ADMIN: `http://localhost:${process.env.PORT}/admin/auth/reset-password`,
-    USER: `http://localhost:${process.env.PORT}/user/auth/reset-password`
-}
-
 module.exports = {
     TRANSACTION_TYPE,
     USER_TYPE,
-    HTTP_STATUS_CODES,
-    FORGOT_PASSWORD_URL
+    HTTP_STATUS_CODES
 }

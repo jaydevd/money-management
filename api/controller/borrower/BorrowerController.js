@@ -9,17 +9,17 @@
 */
 
 const Validator = require('validatorjs');
-const { HTTP_STATUS_CODES, FORGOT_PASSWORD_URL } = require('../../config/constants');
+const { HTTP_STATUS_CODES, USER_TYPE } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
-const { User } = require('../../models');
+const { User, UserBalance } = require('../../models');
 
 const addBorrower = async (req, res) => {
     try {
+        const { email, name, surname, address, amountLended, interestRate } = req.body;
 
-        const { name, surname, address, amountLended } = req.body;
-
-        const validationObj = { name, surname, address, amountBorrowed };
+        const validationObj = req.body;
         const validation = new Validator(validationObj, {
+            email: VALIDATION_RULES.USER.EMAIL,
             name: VALIDATION_RULES.USER.NAME,
             surname: VALIDATION_RULES.USER.SURNAME,
             address: VALIDATION_RULES.USER.ADDRESS,
@@ -46,8 +46,10 @@ const addBorrower = async (req, res) => {
         const newUser = await User.create({
             name,
             surname,
+            email,
             address,
             type,
+            interestRate,
             createdAt,
             createdBy,
             isActive,
@@ -56,12 +58,14 @@ const addBorrower = async (req, res) => {
 
         await UserBalance.create({
             user_id: newUser.id,
-            totalAmount: amountLended
+            totalAmount: amountLended,
+            amountPaid: 0,
+            amountReceived: 0
         })
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: '',
+            message: 'borrower added',
             data: '',
             error: ''
         });
@@ -70,7 +74,7 @@ const addBorrower = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
-            message: '',
+            message: 'internal server error',
             data: '',
             error: error.message
         })
@@ -99,7 +103,7 @@ const listBorrowers = async (req, res) => {
             .concat(whereClause)
             .concat(paginationClause);
 
-        const users = await sequelize.query(selectClause);
+        const borrowers = await sequelize.query(selectClause);
         const total = await sequelize.query(selectCountClause);
 
         const count = 0;
@@ -107,8 +111,8 @@ const listBorrowers = async (req, res) => {
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: '',
-            data: { users, count },
+            message: 'list of borrowers',
+            data: { borrowers, count },
             error: ''
         });
 
@@ -116,7 +120,7 @@ const listBorrowers = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
-            message: '',
+            message: 'internal server error',
             data: '',
             error: error.message
         })

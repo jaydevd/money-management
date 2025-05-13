@@ -11,11 +11,11 @@
 const Validator = require('validatorjs');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { HTTP_STATUS_CODES, FORGOT_PASSWORD_URL } = require('../../config/constants');
+const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Admin } = require('../../models');
-const { SendPasswordResetMail } = require('../../helpers/mail/ForgotPassword');
-const client = require("../../config/redis");
+const { passResetMail } = require('../../helpers/mail/PassResetMail');
+const { v4: uuidv4 } = require('uuid');
 
 const logIn = async (req, res) => {
     try {
@@ -36,7 +36,7 @@ const logIn = async (req, res) => {
             })
         }
 
-        const admin = await Admin.findOne({ attributes: ['id', 'name', 'email', 'password'], where: { email } });
+        const admin = await Admin.findOne({ attributes: ['id', 'name', 'surname', 'email', 'password'], where: { email } });
 
         if (!admin) {
             return res.status(400).json({
@@ -64,11 +64,10 @@ const logIn = async (req, res) => {
 
         await Admin.update({ token }, { where: { id: admin.id } });
 
-        client.set(`admin:${admin.id}`, JSON.stringify(admin));
-
         const adminDetails = {
             id: admin.id,
             name: admin.name,
+            surname: admin.surname,
             email: admin.email
         };
 
@@ -121,18 +120,32 @@ const forgotPassword = async (req, res) => {
     try {
         const { email } = req.body;
 
-        const token = uuidv4();
+        const admin = await Admin.findOne({ attributes: ['id', 'email'], where: { email } });
 
-        await Admin.update({ token }, { where: { email } });
+        if (!admin) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: "user with this email doesn't exist",
+                data: '',
+                error: ''
+            })
+        }
 
-        const URL = FORGOT_PASSWORD_URL.ADMIN + `/:${token}`;
+        const token = uuidv4(),
+            tokenExpiry = Math.floor(Date.now() / 1000) + 3600,
+            updatedAt = Math.floor(Date.now() / 1000),
+            updatedBy = admin.id;
 
-        SendPasswordResetMail(URL, email);
+        await Admin.update({ token, tokenExpiry, updatedAt, updatedBy }, { where: { id: admin.id } });
+
+        const url = `http://localhost:${process.env.PORT}/auth/verify/${admin.id}/${token}`;
+
+        await passResetMail(url, email);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: 'token generated',
-            data: '',
+            message: 'password reset mail sent to the user',
+            data: { url },
             error: ''
         })
 
@@ -147,13 +160,105 @@ const forgotPassword = async (req, res) => {
     }
 }
 
+const verifyPasswordResetLink = async (req, res) => {
+    try {
+        const { id, token } = req.params;
+
+        const admin = await Admin.findOne({ attributes: ['id', 'token', 'tokenExpiry'], where: { id } });
+
+        if (!admin) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'user not found',
+                data: '',
+                error: ''
+            })
+        }
+
+        if (admin.token != token) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'invalid token',
+                data: '',
+                error: ''
+            })
+        }
+
+        const currentTime = Math.floor(Date.now() / 1000);
+
+        if (admin.tokenExpiry <= currentTime) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'token expired',
+                data: '',
+                error: ''
+            })
+        }
+
+        return res.status(200).json({
+            status: HTTP_STATUS_CODES.SUCCESS.OK,
+            message: 'link is valid',
+            data: '',
+            error: ''
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
+            message: 'internal server error',
+            data: id,
+            error: error.message
+        })
+    }
+}
+
 const resetPassword = async (req, res) => {
     try {
-        const { token, password } = req.body;
+        const { id } = req.params;
+        const { password } = req.body;
 
-        const hashedPassword = bcrypt.hash(password, 10);
+        const validationObj = req.body;
+        const validation = new Validator(validationObj, {
+            password: VALIDATION_RULES.ADMIN.PASSWORD
+        });
 
-        await Admin.update({ password: hashedPassword }, { where: { token } });
+        if (validation.fails()) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'validation failed',
+                data: '',
+                error: validation.errors.all()
+            })
+        }
+
+        const admin = await Admin.findOne({ attributes: ['id', 'tokenExpiry'], where: { id } });
+
+        if (!admin) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'user not found',
+                data: '',
+                error: ''
+            })
+        }
+
+        const currentTime = Math.floor(Date.now() / 1000);
+        if (admin.tokenExpiry <= currentTime) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'token expired',
+                data: '',
+                error: ''
+            })
+        }
+
+        const
+            hashedPassword = await bcrypt.hash(password, 10),
+            updatedAt = Math.floor(Date.now() / 1000),
+            updatedBy = id;
+
+        await Admin.update({ password: hashedPassword, token: null, tokenExpiry: null, updatedAt, updatedBy }, { where: { id } });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -177,5 +282,6 @@ module.exports = {
     logIn,
     logOut,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyPasswordResetLink
 }

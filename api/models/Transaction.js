@@ -4,7 +4,11 @@ const { commonAttributes } = require('./CommonAttributes');
 const { TRANSACTION_TYPE } = require("../config/constants");
 
 const Transaction = sequelize.define("Transaction", {
-    id: { ...commonAttributes.id },
+    id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+        autoIncrement: true
+    },
     user_id: {
         type: DataTypes.INTEGER,
         references: {

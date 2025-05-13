@@ -9,9 +9,7 @@
 */
 
 const Validator = require('validatorjs');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { HTTP_STATUS_CODES, FORGOT_PASSWORD_URL } = require('../../config/constants');
+const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Transaction, User, UserBalance } = require('../../models');
 
@@ -39,6 +37,8 @@ const makeTransaction = async (req, res) => {
         }
 
         await Transaction.create({ userId, type: transactionType, amount, date, notes });
+        await User.update({});
+        await UserBalance.update({});
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -80,7 +80,7 @@ const listTransactions = async (req, res) => {
             .concat(whereClause)
             .concat(paginationClause);
 
-        const users = await sequelize.query(selectClause);
+        const transactions = await sequelize.query(selectClause);
         const total = await sequelize.query(selectCountClause);
 
         const count = 0;
@@ -88,8 +88,8 @@ const listTransactions = async (req, res) => {
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: '',
-            data: { users, count },
+            message: 'list of transactions',
+            data: { transactions, count },
             error: ''
         });
 
@@ -97,7 +97,7 @@ const listTransactions = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
-            message: '',
+            message: 'internal server error',
             data: '',
             error: error.message
         })

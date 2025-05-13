@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Invitation Mail Template</title>
+    <style>
+        #btn {
+            border-radius: 4px;
+            background-color: blueviolet;
+            color: white;
+            padding: 4px 2px;
+        }
+
+        #btn a {
+            color: white;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>Hello {{ name }},</h3>
+    <p>You are invited to use money management platform.</p>
+    <p>Please click on the button below to accept the invitation</p>
+    <button id="btn"><a href={{ URL }}>Accept invitation</a></button>
+    <div>
+        <p>with regards,</p>
+        <p>money management</p>
+    </div>
+</body>
+
+</html>

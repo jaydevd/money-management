@@ -1,11 +1,6 @@
 const { DataTypes } = require("sequelize");
 
 const commonAttributes = {
-    id: {
-        type: DataTypes.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
-    },
     isActive: {
         field: 'is_active',
         type: DataTypes.BOOLEAN,

@@ -13,11 +13,11 @@ const { User } = require('../../models');
 
 const getUsers = async (req, res) => {
     try {
-        const users = await User.findAll({ attributes: ['id', 'name', 'surname'] });
+        const users = await User.findAll({ attributes: ['id', 'name', 'surname', 'type'] });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: '',
+            message: 'list of users',
             data: users,
             error: ''
         });
@@ -25,7 +25,7 @@ const getUsers = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
-            message: '',
+            message: 'internal server error',
             data: '',
             error: error.message
         })

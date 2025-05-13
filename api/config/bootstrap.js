@@ -8,22 +8,30 @@ module.exports.bootstrap = async () => {
         const admin = await Admin.findOne({ attributes: ['id'] });
         if (admin) return;
 
-        const id = uuidv4();
-        const name = "Admin user";
-        const email = "admin2025@gmail.com";
-        const password = process.env.ADMIN_PASSWORD;
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const createdAt = Math.floor(Date.now() / 1000);
+        const
+            name = "John",
+            surname = "Doe",
+            email = "jaydevd@zignuts.com",
+            password = process.env.USER_PASSWORD,
+            hashedPassword = await bcrypt.hash(password, 10),
+            createdAt = Math.floor(Date.now() / 1000),
+            createdBy = 1,
+            isActive = true,
+            isDeleted = false;
 
         await Admin.create({
-            id,
             name,
+            surname,
             email,
             password: hashedPassword,
-            createdAt
+            createdAt,
+            createdBy,
+            isActive,
+            isDeleted
         });
 
     } catch (error) {
+        console.log(error);
         throw new Error(error);
     }
 };

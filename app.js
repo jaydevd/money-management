@@ -1,7 +1,7 @@
 require('dotenv/config');
 const express = require('express');
 const { sequelize } = require('./api/config/database.js');
-const router = require('./API/Routes/index.js');
+const { router } = require('./api/routes');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { bootstrap } = require('./api/config/bootstrap.js');
@@ -25,7 +25,7 @@ try {
         credentials: true
     }));
 
-    app.use('/user', router);
+    app.use('/', router);
     bootstrap();
 
     const PORT = process.env.PORT || 5000;
