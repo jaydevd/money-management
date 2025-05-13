@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Template</title>
+</head>
+
+<body>
+    <h1>Hey {{managerName}},</h1>
+    <p>We hope you're doing well</p>
+    <p>Your today's task log is ready! Here's all you need to know</p>
+    {{#each tasks}}
+    <ul style="display: flex; flex-direction: column; gap: 3px; margin: 5px; padding: 5px; list-style-type: none;">
+        <li>project: {{../projectName}}</li>
+        <li>task: {{this.title}}</li>
+        <li>status: {{this.status}}</li>
+        <li>assigned to: {{this.memberName}}</li>
+        <li>due: {{this.dueDate}}</li>
+    </ul>
+    {{/each}}
+    <p>with regards,</p>
+    <p>Task management system</p>
+</body>
+
+</html>
