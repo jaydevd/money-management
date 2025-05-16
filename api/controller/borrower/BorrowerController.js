@@ -11,21 +11,22 @@
 const Validator = require('validatorjs');
 const { HTTP_STATUS_CODES, USER_TYPE } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
-const { User, UserBalance } = require('../../models');
+const { User, UserBalance, Transaction } = require('../../models');
+const { sequelize } = require('../../config/database');
 
 const addBorrower = async (req, res) => {
     try {
-        const { email, name, surname, address, amountLended, interestRate } = req.body;
+        const { name, surname, address, amountLended, interest, period } = req.body;
 
         const validationObj = req.body;
         const validation = new Validator(validationObj, {
-            email: VALIDATION_RULES.USER.EMAIL,
             name: VALIDATION_RULES.USER.NAME,
             surname: VALIDATION_RULES.USER.SURNAME,
             address: VALIDATION_RULES.USER.ADDRESS,
             amountLended: VALIDATION_RULES.USER_BALANCE.TOTAL_AMOUNT,
-            interestRate: VALIDATION_RULES.USER.INTEREST_RATE
-        })
+            interest: VALIDATION_RULES.USER_BALANCE.INTEREST,
+            period: VALIDATION_RULES.USER_BALANCE.PERIOD
+        });
 
         if (validation.fails()) {
             return res.status(400).json({
@@ -33,7 +34,7 @@ const addBorrower = async (req, res) => {
                 message: 'validation failed',
                 data: '',
                 error: validation.errors.all()
-            })
+            });
         }
 
         const
@@ -46,22 +47,59 @@ const addBorrower = async (req, res) => {
         const newUser = await User.create({
             name,
             surname,
-            email,
             address,
             type,
-            interestRate,
             createdAt,
             createdBy,
             isActive,
             isDeleted
         });
 
-        await UserBalance.create({
-            user_id: newUser.id,
+        if (!newUser) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'failed to save the new user',
+                data: '',
+                error: ''
+            });
+        }
+
+        const transaction = await Transaction.create({
+            userId: newUser.id,
+            amount: amountLended,
+            type: "lended",
+            date: Math.floor(Date.now() / 1000)
+        })
+
+        if (!transaction) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'failed to make the transaction',
+                data: '',
+                error: ''
+            });
+        }
+
+        const remainingAmount = parseInt(amountLended) + (parseInt(amountLended * interest * period)) / 100;
+
+        const userBalance = await UserBalance.create({
+            userId: newUser.id,
             totalAmount: amountLended,
+            interest,
+            period,
+            remainingAmount,
             amountPaid: 0,
             amountReceived: 0
-        })
+        });
+
+        if (!userBalance) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'failed to update the user balance',
+                data: '',
+                error: ''
+            });
+        }
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -77,18 +115,18 @@ const addBorrower = async (req, res) => {
             message: 'internal server error',
             data: '',
             error: error.message
-        })
+        });
     }
 }
 
 const listBorrowers = async (req, res) => {
     try {
 
-        const { page, limit } = req.body;
+        const { page, limit } = req.query;
         const offset = Number(page - 1) * limit;
 
         let selectCountClause = "SELECT COUNT(u.id)"
-        let selectClause = "SELECT u.id, CONCAT(u.name, ' ', u.surname) AS full_name, ub.amount_received, (ub.total_amount * u.interest_rate * 0.1)/100 as interest_received ";
+        let selectClause = "SELECT u.id, CONCAT(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.amount_paid, ub.interest, ub.period, ub.remaining_amount ";
         const fromClause = "\n FROM users u JOIN user_balance ub ON u.id = ub.user_id";
         let whereClause = "\n WHERE type = 'borrower'";
         const paginationClause = `\n LIMIT ${limit} OFFSET ${offset}`;
@@ -101,12 +139,11 @@ const listBorrowers = async (req, res) => {
         selectCountClause = selectCountClause
             .concat(fromClause)
             .concat(whereClause)
-            .concat(paginationClause);
 
-        const borrowers = await sequelize.query(selectClause);
-        const total = await sequelize.query(selectCountClause);
+        const [borrowers] = await sequelize.query(selectClause);
+        const [total] = await sequelize.query(selectCountClause);
 
-        const count = 0;
+        let count = 0;
         if (total.length > 0) count = total[0].count;
 
         return res.status(200).json({
@@ -115,7 +152,6 @@ const listBorrowers = async (req, res) => {
             data: { borrowers, count },
             error: ''
         });
-
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -123,7 +159,7 @@ const listBorrowers = async (req, res) => {
             message: 'internal server error',
             data: '',
             error: error.message
-        })
+        });
     }
 }
 

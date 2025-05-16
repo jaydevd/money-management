@@ -1,10 +1,10 @@
 const express = require('express');
 const { isAdmin } = require('../../middleware/isAdmin');
-const { listTransactions } = require('../../controller/transaction/TransactionController');
+const { receiveMoney } = require('../../controller/lender/TransactionController');
 const router = express.Router();
 
-router.route('/list')
+router.route('/receive')
     .all(isAdmin)
-    .get(listTransactions);
+    .post(receiveMoney);
 
 module.exports = { transactionRoutes: router };

@@ -1,9 +1,9 @@
 const { DataTypes } = require("sequelize");
 const { sequelize } = require("../config/database");
-const { commonAttributes } = require('./CommonAttributes');
 
 const UserBalance = sequelize.define("UserBalance", {
-    user_id: {
+    userId: {
+        field: 'user_id',
         type: DataTypes.INTEGER,
         unique: true,
         references: {
@@ -32,6 +32,14 @@ const UserBalance = sequelize.define("UserBalance", {
         field: 'remaining_amount',
         type: DataTypes.DECIMAL(10, 2)
     },
+    interest: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    },
+    period: {
+        type: DataTypes.INTEGER,
+        allowNull: false
+    }
 },
     {
         tableName: "user_balance",

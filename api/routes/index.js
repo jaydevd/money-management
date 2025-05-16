@@ -2,10 +2,10 @@ const express = require('express');
 
 const { authRoutes } = require('./auth/AuthRoutes.js');
 const { dropDownRoutes } = require('./drop-down/DropDownRoutes.js');
-const { userRoutes } = require('./user/UserRoutes.js');
-const { transactionRoutes } = require('./transaction/TransactionRoutes.js');
+const { adminRoutes } = require('./admin/AdminRoutes.js');
 const { lenderRoutes } = require('./lender/LenderRoutes.js');
 const { borrowerRoutes } = require('./borrower/BorrowerRoutes.js');
+const { transactionRoutes } = require('./transaction/TransactionRoutes.js');
 
 const router = express.Router();
 
@@ -14,6 +14,6 @@ router.use('/lender', lenderRoutes);
 router.use('/borrower', borrowerRoutes);
 router.use('/transaction', transactionRoutes);
 router.use('/drop-down', dropDownRoutes);
-router.use('/user', userRoutes);
+router.use('/admin', adminRoutes);
 
 module.exports = { router };

@@ -15,8 +15,9 @@ const { VALIDATION_RULES } = require('../../config/validations');
 const { Admin } = require('../../models');
 const { userInviteMail } = require('../../helpers/mail/UserInviteMail');
 const { v4: uuidv4 } = require('uuid');
+const { sequelize } = require('../../config/database');
 
-const inviteUser = async (req, res) => {
+const inviteAdmin = async (req, res) => {
     try {
 
         const { email, name, surname, password } = req.body;
@@ -38,12 +39,12 @@ const inviteUser = async (req, res) => {
             })
         }
 
-        let user = await Admin.findOne({ attributes: ['id'], where: { email } });
+        let admin = await Admin.findOne({ attributes: ['id'], where: { email } });
 
-        if (user) {
+        if (admin) {
             return res.status(400).json({
                 status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
-                message: 'user already exists',
+                message: 'admin already exists',
                 data: '',
                 error: ''
             })
@@ -58,9 +59,9 @@ const inviteUser = async (req, res) => {
             isActive = false,
             isDeleted = false;
 
-        user = await Admin.create({ email, name, surname, token, tokenExpiry, password: hashedPassword, createdAt, createdBy, isActive, isDeleted });
+        admin = await Admin.create({ email, name, surname, token, tokenExpiry, password: hashedPassword, createdAt, createdBy, isActive, isDeleted });
 
-        const url = `http://localhost:5000/user/verify/${user.id}/${token}`;
+        const url = `http://localhost:5000/admin/verify/${admin.id}/${token}`;
 
         await userInviteMail(name, email, url);
 
@@ -82,7 +83,7 @@ const inviteUser = async (req, res) => {
     }
 }
 
-const verifyUser = async (req, res) => {
+const verifyAdmin = async (req, res) => {
     try {
         const { id, token } = req.params;
 
@@ -150,19 +151,29 @@ const verifyUser = async (req, res) => {
         console.log(error);
         return res.status(500).json({
             status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
-            message: '',
+            message: 'internal server error',
             data: '',
             error: error.message
         })
     }
 }
 
-const deleteUser = async (req, res) => {
+const deleteAdmin = async (req, res) => {
     try {
 
         const { id } = req.body;
-        const admin = req.admin;
-        const adminId = admin.id;
+
+        const admin = Admin.findOne({ attributes: ['id', 'email'], where: { id } });
+        if (admin.email == process.env.ADMIN_EMAIL) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: "can't delete master admin",
+                data: '',
+                error: ''
+            })
+        }
+
+        const adminId = req.admin.id;
 
         const
             token = null,
@@ -176,7 +187,7 @@ const deleteUser = async (req, res) => {
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: 'user deleted successfully',
+            message: 'admin deleted successfully',
             data: '',
             error: ''
         });
@@ -192,8 +203,49 @@ const deleteUser = async (req, res) => {
     }
 }
 
+const listAdmins = async (req, res) => {
+    try {
+        const { page, limit } = req.query;
+        const offset = Number(page - 1) * limit;
+
+        let selectCountClause = "SELECT COUNT(id)"
+        let selectClause = "SELECT id, CONCAT(name, ' ', surname) as full_name, email";
+        const fromClause = "\n FROM admins";
+        const paginationClause = `\n LIMIT ${limit} OFFSET ${offset}`;
+
+        selectClause = selectClause
+            .concat(fromClause)
+            .concat(paginationClause);
+
+        selectCountClause = selectCountClause
+            .concat(fromClause)
+
+        const [admins] = await sequelize.query(selectClause);
+        const [total] = await sequelize.query(selectCountClause);
+
+        let count = 0;
+        if (total.length > 0) count = total[0].count;
+
+        return res.status(200).json({
+            status: HTTP_STATUS_CODES.SUCCESS.OK,
+            message: 'list of admins',
+            data: { admins, count },
+            error: ''
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
+            message: 'internal server error',
+            data: '',
+            error: error.message
+        })
+    }
+}
+
 module.exports = {
-    inviteUser,
-    deleteUser,
-    verifyUser
+    inviteAdmin,
+    deleteAdmin,
+    verifyAdmin,
+    listAdmins
 }

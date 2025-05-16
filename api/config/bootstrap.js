@@ -1,5 +1,4 @@
 const { Admin } = require("../models/index");
-const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 
 module.exports.bootstrap = async () => {
@@ -11,7 +10,7 @@ module.exports.bootstrap = async () => {
         const
             name = "John",
             surname = "Doe",
-            email = "jaydevd@zignuts.com",
+            email = process.env.ADMIN_EMAIL,
             password = process.env.USER_PASSWORD,
             hashedPassword = await bcrypt.hash(password, 10),
             createdAt = Math.floor(Date.now() / 1000),

@@ -6,7 +6,7 @@ const COMMON_RULES = {
     EMAIL: 'required|string|max:100',
     PASSWORD: "required|max:60",
     TOKEN: "string|max:200",
-    DATE: 'required|integer',
+    TIMESTAMP: 'required|integer',
     AMOUNT: 'required|numeric|min:1',
     TEXT: 'string'
 }
@@ -15,12 +15,12 @@ const VALIDATION_RULES = {
     USER: {
         ID: COMMON_RULES.ID,
         NAME: COMMON_RULES.NAME,
-        EMAIL: COMMON_RULES.EMAIL,
         SURNAME: 'string|max:100',
         ADDRESS: COMMON_RULES.TEXT,
         TOKEN: COMMON_RULES.TOKEN,
         TYPE: `required|string|in:${Object.values(USER_TYPE).join(',')}`,
-        INTEREST_RATE: 'required|numeric'
+        INTEREST: 'required|numeric',
+        PERIOD: 'required|integer|min:1'
     },
     TRANSACTION: {
         ID: COMMON_RULES.ID,
@@ -35,7 +35,9 @@ const VALIDATION_RULES = {
         TOTAL_AMOUNT: COMMON_RULES.AMOUNT,
         AMOUNT_PAID: COMMON_RULES.AMOUNT,
         AMOUNT_RECEIVED: COMMON_RULES.AMOUNT,
-        REMAINING_AMOUNT: COMMON_RULES.AMOUNT
+        REMAINING_AMOUNT: COMMON_RULES.AMOUNT,
+        INTEREST: 'required|integer|min:0',
+        PERIOD: 'required|integer|min:1'
     },
     ADMIN: {
         ID: COMMON_RULES.ID,

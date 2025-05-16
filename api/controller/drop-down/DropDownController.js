@@ -13,7 +13,7 @@ const { User } = require('../../models');
 
 const getUsers = async (req, res) => {
     try {
-        const users = await User.findAll({ attributes: ['id', 'name', 'surname', 'type'] });
+        const users = await User.findAll({ attributes: ['id', 'name', 'surname'] });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
