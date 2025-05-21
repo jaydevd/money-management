@@ -89,7 +89,8 @@ const addBorrower = async (req, res) => {
             period,
             remainingAmount,
             amountPaid: 0,
-            amountReceived: 0
+            amountReceived: 0,
+            dueAmount: 0
         });
 
         if (!userBalance) {
@@ -126,7 +127,7 @@ const listBorrowers = async (req, res) => {
         const offset = Number(page - 1) * limit;
 
         let selectCountClause = "SELECT COUNT(u.id)"
-        let selectClause = "SELECT u.id, CONCAT(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.amount_paid, ub.interest, ub.period, ub.remaining_amount ";
+        let selectClause = "SELECT u.id, CONCAT(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.amount_paid, ub.interest, ub.period, ub.remaining_amount, ub.due_amount ";
         const fromClause = "\n FROM users u JOIN user_balance ub ON u.id = ub.user_id";
         let whereClause = "\n WHERE type = 'borrower'";
         const paginationClause = `\n LIMIT ${limit} OFFSET ${offset}`;

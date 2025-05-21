@@ -22,7 +22,7 @@ const logIn = async (req, res) => {
         const { email, password } = req.body;
         const validationObj = req.body;
 
-        let validation = new Validator(validationObj, {
+        const validation = new Validator(validationObj, {
             email: VALIDATION_RULES.ADMIN.EMAIL,
             password: VALIDATION_RULES.ADMIN.PASSWORD
         });
@@ -39,9 +39,9 @@ const logIn = async (req, res) => {
         const admin = await Admin.findOne({ attributes: ['id', 'name', 'surname', 'email', 'password'], where: { email } });
 
         if (!admin) {
-            return res.status(400).json({
-                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
-                message: "Admin Not Found",
+            return res.status(401).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
+                message: "admin not found",
                 data: "",
                 error: ""
             });
@@ -50,9 +50,9 @@ const logIn = async (req, res) => {
         const isMatch = await bcrypt.compare(password, admin.password);
 
         if (!isMatch) {
-            return res.status(403).json({
+            return res.status(401).json({
                 status: HTTP_STATUS_CODES.CLIENT_ERROR.FORBIDDEN,
-                message: "Password doesn't match",
+                message: "password doesn't match",
                 data: "",
                 error: ""
             })
@@ -118,17 +118,18 @@ const logOut = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
     try {
-        const { email } = req.body;
+        const { email, url } = req.body;
 
         const admin = await Admin.findOne({ attributes: ['id', 'email'], where: { email } });
+        console.log("admin:", admin);
 
         if (!admin) {
-            return res.status(400).json({
-                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
-                message: "user with this email doesn't exist",
+            return res.status(401).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
+                message: "admin with this email doesn't exist",
                 data: '',
                 error: ''
-            })
+            });
         }
 
         const token = uuidv4(),
@@ -138,14 +139,14 @@ const forgotPassword = async (req, res) => {
 
         await Admin.update({ token, tokenExpiry, updatedAt, updatedBy }, { where: { id: admin.id } });
 
-        const url = `http://localhost:${process.env.PORT}/auth/verify/${admin.id}/${token}`;
+        const updatedUrl = url + `/${admin.id}/${token}`;
 
-        await passResetMail(url, email);
+        await passResetMail(updatedUrl, email);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
             message: 'password reset mail sent to the user',
-            data: { url },
+            data: '',
             error: ''
         })
 
@@ -198,7 +199,7 @@ const verifyPasswordResetLink = async (req, res) => {
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
             message: 'link is valid',
-            data: '',
+            data: id,
             error: ''
         });
 
@@ -235,8 +236,8 @@ const resetPassword = async (req, res) => {
         const admin = await Admin.findOne({ attributes: ['id', 'tokenExpiry'], where: { id } });
 
         if (!admin) {
-            return res.status(400).json({
-                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+            return res.status(401).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
                 message: 'user not found',
                 data: '',
                 error: ''
@@ -245,8 +246,8 @@ const resetPassword = async (req, res) => {
 
         const currentTime = Math.floor(Date.now() / 1000);
         if (admin.tokenExpiry <= currentTime) {
-            return res.status(400).json({
-                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+            return res.status(401).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
                 message: 'token expired',
                 data: '',
                 error: ''

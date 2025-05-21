@@ -18,7 +18,7 @@ const listTransactions = async (req, res) => {
         const offset = Number(page - 1) * limit;
 
         let selectCountClause = "SELECT COUNT(t.id)"
-        let selectClause = "SELECT CONCAT(u.name, ' ', u.surname) AS full_name, t.type, t.amount, t.notes";
+        let selectClause = "SELECT CONCAT(u.name, ' ', u.surname) AS full_name, t.date, t.type, t.amount, t.notes";
         const fromClause = "\n FROM transactions t JOIN users u ON u.id = t.user_id";
         let whereClause = "\n";
         const paginationClause = `\n LIMIT ${limit} OFFSET ${offset}`;

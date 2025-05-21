@@ -26,7 +26,7 @@ const VALIDATION_RULES = {
         ID: COMMON_RULES.ID,
         USER_ID: COMMON_RULES.ID,
         TYPE: `string|in:${Object.values(TRANSACTION_TYPE).join(',')}`,
-        DATE: COMMON_RULES.DATE,
+        DATE: COMMON_RULES.TIMESTAMP,
         NOTES: COMMON_RULES.TEXT,
         AMOUNT: COMMON_RULES.AMOUNT
     },

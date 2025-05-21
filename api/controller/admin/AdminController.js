@@ -134,11 +134,9 @@ const verifyAdmin = async (req, res) => {
 
         const
             isActive = true,
-            isDeleted = false,
-            updatedBy = req.admin.id,
-            updatedAt = Math.floor(Date.now() / 1000);
+            isDeleted = false
 
-        await Admin.update({ token: null, tokenExpiry: null, isActive, isDeleted, updatedAt, updatedBy }, { where: { id } });
+        await Admin.update({ token: null, tokenExpiry: null, isActive, isDeleted }, { where: { id } });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,

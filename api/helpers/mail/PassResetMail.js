@@ -12,7 +12,7 @@ const passResetMail = async (url, email) => {
         const html = template({ url });
 
         const mailOptions = {
-            from: `jaydevdwd@gmail.com`,
+            from: `admin@xiu4cjlm.mailosaur.net`,
             to: email,
             subject: 'Password Reset',
             html: html,

@@ -12,14 +12,16 @@ const Validator = require('validatorjs');
 const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Transaction, UserBalance } = require('../../models');
+const { installmentsDue } = require('../../helpers/lender/installmentsDue');
 
 const receiveMoney = async (req, res) => {
     try {
-        const { userId, amount, date, notes } = req.body;
 
-        const validationObj = req.body;
+        const { userId, amount, date, notes } = req.body;
+        const validationObj = { userId, amount, date, notes };
+
         const validation = new Validator(validationObj, {
-            userId: VALIDATION_RULES.TRANSACTION.ID,
+            userId: VALIDATION_RULES.TRANSACTION.USER_ID,
             amount: VALIDATION_RULES.TRANSACTION.AMOUNT,
             date: VALIDATION_RULES.TRANSACTION.DATE,
             notes: VALIDATION_RULES.TRANSACTION.NOTES
@@ -31,7 +33,7 @@ const receiveMoney = async (req, res) => {
                 message: 'validation failed',
                 data: '',
                 error: validation.errors.all()
-            })
+            });
         }
 
         const transactionType = "received";
@@ -44,7 +46,17 @@ const receiveMoney = async (req, res) => {
             notes
         });
 
-        await UserBalance.findOne({ attributes: ['id', 'userId', 'amountReceived', 'totalAmount', 'remainingAmount', 'interest'] }, { where: { userId } })
+        const ub = await UserBalance.findOne({ attributes: ['id', 'userId', 'amountReceived', 'totalAmount', 'remainingAmount', 'interest', 'period'] }, { where: { userId } });
+        const t = await Transaction.findOne({ attributes: ['date'], where: { userId, type: "borrowed" } });
+
+        const simpleInterest = (ub.totalAmount * ub.interest * ub.period) / 100;
+        const totalSum = parseInt(ub.totalAmount) + simpleInterest;
+        const remainingAmount = totalSum - parseInt(amount);
+
+        const dueAmount = await installmentsDue(ub, t.date);
+        console.log(dueAmount);
+
+        await UserBalance.update({ amountReceived: amount, remainingAmount, dueAmount }, { where: { userId } });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -60,7 +72,7 @@ const receiveMoney = async (req, res) => {
             message: 'internal server error',
             data: '',
             error: error.message
-        })
+        });
     }
 }
 

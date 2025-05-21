@@ -12,7 +12,7 @@ const isAdmin = async (req, res, next) => {
     if (!token) {
       return res.status(400).json({
         status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
-        message: 'Token not found',
+        message: 'token not found',
         data: '',
         error: ''
       })
@@ -24,7 +24,7 @@ const isAdmin = async (req, res, next) => {
     if (!payload) {
       return res.status(401).json({
         status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
-        message: 'Invalid Token',
+        message: 'invalid Token',
         data: '',
         error: ''
       })
@@ -45,7 +45,7 @@ const isAdmin = async (req, res, next) => {
     if (token !== admin.token) {
       return res.status(401).json({
         status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
-        message: "Tokens don't match",
+        message: "tokens don't match",
         data: '',
         error: ''
       });

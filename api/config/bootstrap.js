@@ -11,7 +11,7 @@ module.exports.bootstrap = async () => {
             name = "John",
             surname = "Doe",
             email = process.env.ADMIN_EMAIL,
-            password = process.env.USER_PASSWORD,
+            password = process.env.ADMIN_PASSWORD,
             hashedPassword = await bcrypt.hash(password, 10),
             createdAt = Math.floor(Date.now() / 1000),
             createdBy = 1,

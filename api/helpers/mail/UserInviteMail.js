@@ -13,7 +13,7 @@ const userInviteMail = async (name, email, URL) => {
         const html = template({ name, URL });
 
         const mailOptions = {
-            from: process.env.SMTP_EMAIL,
+            from: 'admin@xiu4cjlm.mailosaur.net',
             to: email,
             subject: "Invitation",
             html: html

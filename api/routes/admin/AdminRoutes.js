@@ -12,7 +12,6 @@ router.route('/list')
     .get(listAdmins);
 
 router.route('/verify/:id/:token')
-    .all(isAdmin)
     .get(verifyAdmin);
 
 router.route('/delete')

@@ -12,12 +12,14 @@ const Validator = require('validatorjs');
 const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Transaction, UserBalance } = require('../../models');
+const { installmentsDue } = require('../../helpers/borrower/installmentsDue');
 
 const payMoney = async (req, res) => {
     try {
-        const { userId, amount, date, notes } = req.body;
 
+        const { userId, amount, date, notes } = req.body;
         const validationObj = req.body;
+
         const validation = new Validator(validationObj, {
             userId: VALIDATION_RULES.TRANSACTION.ID,
             amount: VALIDATION_RULES.TRANSACTION.AMOUNT,
@@ -36,7 +38,7 @@ const payMoney = async (req, res) => {
 
         const transactionType = "paid";
 
-        const transaction = await Transaction.create({
+        await Transaction.create({
             userId,
             type: transactionType,
             amount,
@@ -44,15 +46,15 @@ const payMoney = async (req, res) => {
             notes
         });
 
-        const ub = await UserBalance.findOne({ attributes: ['id', 'userId', 'amountPaid', 'totalAmount', 'remainingAmount', 'interest'] }, { where: { userId } })
+        const ub = await UserBalance.findOne({ attributes: ['id', 'userId', 'amountPaid', 'totalAmount', 'remainingAmount', 'interest', 'period'] }, { where: { userId } })
+        const t = await Transaction.findOne({ attributes: ['date'], where: { userId, type: "lended" } });
 
-        // case 1: user pays exact amount that is to be paid as the monthly installment
         const simpleInterest = (ub.totalAmount * ub.interest * ub.period) / 100;
-        const totalSum = ub.totalAmount + simpleInterest;
-        // const monthlyInstallment = totalSum / 12;
+        const totalSum = parseInt(ub.totalAmount) + simpleInterest;
+        const remainingAmount = totalSum - parseInt(amount);
 
-        const remainingAmount = totalSum - amount;
-        await UserBalance.update({ amountPaid: amount, remainingAmount }, { where: { userId } });
+        const dueAmount = await installmentsDue(ub, t.date);
+        await UserBalance.update({ amountPaid: amount, remainingAmount, dueAmount }, { where: { userId } });
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -72,6 +74,34 @@ const payMoney = async (req, res) => {
     }
 }
 
+const dueAmount = async (req, res) => {
+    try {
+        const { userId } = req.query;
+        console.log("userId: ", userId);
+
+        const ub = await UserBalance.findOne({ attributes: ['totalAmount', 'amountPaid', 'interest', 'period'], where: { userId } });
+        const t = await Transaction.findOne({ attributes: ['date'], where: { userId, type: 'lended' } });
+
+        const dueAmount = await installmentsDue(ub, t.date);
+
+        return res.status(200).json({
+            status: HTTP_STATUS_CODES.SUCCESS.OK,
+            message: 'due amount calculated',
+            data: dueAmount,
+            error: ''
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            status: HTTP_STATUS_CODES.SERVER_ERROR.INTERNAL_SERVER_ERROR,
+            message: 'internal server error',
+            data: '',
+            error: error.message
+        })
+    }
+}
 module.exports = {
-    payMoney
+    payMoney,
+    dueAmount
 }

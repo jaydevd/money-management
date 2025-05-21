@@ -39,6 +39,10 @@ const UserBalance = sequelize.define("UserBalance", {
     period: {
         type: DataTypes.INTEGER,
         allowNull: false
+    },
+    dueAmount: {
+        field: 'due_amount',
+        type: DataTypes.DECIMAL(10, 2)
     }
 },
     {
