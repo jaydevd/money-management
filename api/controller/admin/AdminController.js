@@ -68,7 +68,7 @@ const inviteAdmin = async (req, res) => {
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
             message: 'invitation mail sent to the user',
-            data: url,
+            data: '',
             error: ''
         });
 
@@ -161,6 +161,20 @@ const deleteAdmin = async (req, res) => {
 
         const { id } = req.body;
 
+        const validationObj = req.body;
+        const validation = new Validator(validationObj, {
+            id: VALIDATION_RULES.ADMIN.ID
+        })
+
+        if (validation.fails()) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'validation failed',
+                data: '',
+                error: validation.errors.all()
+            })
+        }
+
         const admin = Admin.findOne({ attributes: ['id', 'email'], where: { id } });
         if (admin.email == process.env.ADMIN_EMAIL) {
             return res.status(400).json({
@@ -230,6 +244,7 @@ const listAdmins = async (req, res) => {
             data: { admins, count },
             error: ''
         });
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({

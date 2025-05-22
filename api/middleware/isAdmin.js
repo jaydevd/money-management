@@ -7,11 +7,10 @@ const isAdmin = async (req, res, next) => {
   try {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
-    // console.log("token from isUser: ", token);
 
     if (!token) {
-      return res.status(400).json({
-        status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+      return res.status(401).json({
+        status: HTTP_STATUS_CODES.CLIENT_ERROR.UNAUTHORIZED,
         message: 'token not found',
         data: '',
         error: ''

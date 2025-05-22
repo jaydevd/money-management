@@ -54,7 +54,6 @@ const receiveMoney = async (req, res) => {
         const remainingAmount = totalSum - parseInt(amount);
 
         const dueAmount = await installmentsDue(ub, t.date);
-        console.log(dueAmount);
 
         await UserBalance.update({ amountReceived: amount, remainingAmount, dueAmount }, { where: { userId } });
 

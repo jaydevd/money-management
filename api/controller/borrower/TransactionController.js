@@ -77,7 +77,6 @@ const payMoney = async (req, res) => {
 const dueAmount = async (req, res) => {
     try {
         const { userId } = req.query;
-        console.log("userId: ", userId);
 
         const ub = await UserBalance.findOne({ attributes: ['totalAmount', 'amountPaid', 'interest', 'period'], where: { userId } });
         const t = await Transaction.findOne({ attributes: ['date'], where: { userId, type: 'lended' } });

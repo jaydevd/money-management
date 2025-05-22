@@ -3,9 +3,11 @@ const { addLender, listLenders } = require('../../controller/lender/LenderContro
 const { isAdmin } = require('../../middleware/isAdmin');
 const { transactionRoutes } = require('./TransactionRoutes');
 const router = express.Router();
+const multer = require('multer');
+const upload = multer();
 
 router.route('/add')
-    .all(isAdmin)
+    .all(isAdmin, upload.none())
     .post(addLender);
 
 router.route('/list')

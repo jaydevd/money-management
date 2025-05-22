@@ -21,6 +21,7 @@ const logIn = async (req, res) => {
     try {
         const { email, password } = req.body;
         const validationObj = req.body;
+        console.log('req.body: ', req);
 
         const validation = new Validator(validationObj, {
             email: VALIDATION_RULES.ADMIN.EMAIL,
@@ -118,10 +119,23 @@ const logOut = async (req, res) => {
 
 const forgotPassword = async (req, res) => {
     try {
-        const { email, url } = req.body;
+        const { email } = req.body;
+
+        const validationObj = req.body;
+        const validation = new Validator(validationObj, {
+            email: VALIDATION_RULES.ADMIN.EMAIL
+        });
+
+        if (validation.fails()) {
+            return res.status(400).json({
+                status: HTTP_STATUS_CODES.CLIENT_ERROR.BAD_REQUEST,
+                message: 'validation failed',
+                data: '',
+                error: validation.errors.all()
+            })
+        }
 
         const admin = await Admin.findOne({ attributes: ['id', 'email'], where: { email } });
-        console.log("admin:", admin);
 
         if (!admin) {
             return res.status(401).json({
@@ -139,13 +153,13 @@ const forgotPassword = async (req, res) => {
 
         await Admin.update({ token, tokenExpiry, updatedAt, updatedBy }, { where: { id: admin.id } });
 
-        const updatedUrl = url + `/${admin.id}/${token}`;
+        const url = `http://localhost:5173/auth/reset-password/${admin.id}/${token}`;
 
-        await passResetMail(updatedUrl, email);
+        await passResetMail(url, email);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
-            message: 'password reset mail sent to the user',
+            message: 'email sent to the user',
             data: '',
             error: ''
         })

@@ -20,11 +20,6 @@ const listLenders = async (req, res) => {
         const { page, limit } = req.query;
         const offset = Number(page - 1) * limit;
 
-        // const simpleInterest = (ub.totalAmount * ub.interest * ub.period) / 100;
-        // const totalSum = parseInt(ub.totalAmount) + simpleInterest;
-        // const remainingAmount = totalSum - parseInt(amount);
-        // const dueAmount = installmentsDue(ub, t);
-
         let selectCountClause = "SELECT COUNT(u.id)"
         let selectClause = `SELECT u.id, concat(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.interest, ub.amount_received, ub.period, ub.remaining_amount, ub.due_amount `;
         const fromClause = "\n FROM users u JOIN user_balance ub ON u.id = ub.user_id";
