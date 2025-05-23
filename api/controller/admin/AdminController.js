@@ -61,7 +61,7 @@ const inviteAdmin = async (req, res) => {
 
         admin = await Admin.create({ email, name, surname, token, tokenExpiry, password: hashedPassword, createdAt, createdBy, isActive, isDeleted });
 
-        const url = `http://localhost:5000/admin/verify/${admin.id}/${token}`;
+        const url = `http://localhost:5173/admin/verify/${admin.id}/${token}`;
 
         await userInviteMail(name, email, url);
 

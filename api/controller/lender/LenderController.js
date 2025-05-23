@@ -13,6 +13,7 @@ const { HTTP_STATUS_CODES, USER_TYPE } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { User, UserBalance, Transaction } = require('../../models');
 const { sequelize } = require('../../config/database');
+const { calculateLendersDueAmount } = require('../../helpers/cron/CalculateLendersDueAmount');
 
 const listLenders = async (req, res) => {
     try {
@@ -21,9 +22,9 @@ const listLenders = async (req, res) => {
         const offset = Number(page - 1) * limit;
 
         let selectCountClause = "SELECT COUNT(u.id)"
-        let selectClause = `SELECT u.id, concat(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.interest, ub.amount_received, ub.period, ub.remaining_amount, ub.due_amount `;
-        const fromClause = "\n FROM users u JOIN user_balance ub ON u.id = ub.user_id";
-        let whereClause = "\n WHERE type = 'lender'";
+        let selectClause = `SELECT u.id, concat(u.name, ' ', u.surname) AS full_name, ub.total_amount, ub.interest, ub.amount_received, ub.period, ub.remaining_amount, ub.due_amount, t.date `;
+        const fromClause = "\n FROM users u JOIN user_balance ub ON u.id = ub.user_id JOIN transactions t ON u.id = t.user_id";
+        let whereClause = "\n WHERE u.type = 'lender'";
         const paginationClause = `\n LIMIT ${limit} OFFSET ${offset}`;
 
         selectClause = selectClause
@@ -34,11 +35,9 @@ const listLenders = async (req, res) => {
         selectCountClause = selectCountClause
             .concat(fromClause)
             .concat(whereClause)
-            .concat(paginationClause);
 
         const [lenders] = await sequelize.query(selectClause);
         const [total] = await sequelize.query(selectCountClause);
-
 
         let count = 0;
         if (total.length > 0) count = total[0].count;
@@ -112,12 +111,19 @@ const addLender = async (req, res) => {
             });
         }
 
+        const
+            userId = newUser.id,
+            amount = amountBorrowed,
+            transactionType = "borrowed",
+            // date = Math.floor(Date.now() / 1000)
+            date = 1735689600
+
         const transaction = await Transaction.create({
-            userId: newUser.id,
-            amount: amountBorrowed,
-            type: "borrowed",
-            date: Math.floor(Date.now() / 1000)
-        })
+            userId,
+            amount,
+            type: transactionType,
+            date
+        });
 
         if (!transaction) {
             return res.status(400).json({
@@ -149,6 +155,8 @@ const addLender = async (req, res) => {
                 error: ''
             });
         }
+
+        calculateLendersDueAmount();
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,

@@ -21,7 +21,6 @@ const logIn = async (req, res) => {
     try {
         const { email, password } = req.body;
         const validationObj = req.body;
-        console.log('req.body: ', req);
 
         const validation = new Validator(validationObj, {
             email: VALIDATION_RULES.ADMIN.EMAIL,

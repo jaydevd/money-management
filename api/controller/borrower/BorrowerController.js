@@ -13,6 +13,7 @@ const { HTTP_STATUS_CODES, USER_TYPE } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { User, UserBalance, Transaction } = require('../../models');
 const { sequelize } = require('../../config/database');
+const { calculateBorrowersDueAmount } = require('../../helpers/cron/CalculateBorrowersDueAmount');
 
 const addBorrower = async (req, res) => {
     try {
@@ -64,12 +65,19 @@ const addBorrower = async (req, res) => {
             });
         }
 
+        const
+            userId = newUser.id,
+            amount = amountLended,
+            transactionType = "lended",
+            // date = Math.floor(Date.now() / 1000)
+            date = 1735669800
+
         const transaction = await Transaction.create({
-            userId: newUser.id,
-            amount: amountLended,
-            type: "lended",
-            date: Math.floor(Date.now() / 1000)
-        })
+            userId,
+            amount,
+            type: transactionType,
+            date
+        });
 
         if (!transaction) {
             return res.status(400).json({
@@ -101,6 +109,7 @@ const addBorrower = async (req, res) => {
                 error: ''
             });
         }
+        calculateBorrowersDueAmount(newUser.id);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,

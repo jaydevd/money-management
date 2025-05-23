@@ -12,7 +12,7 @@ const Validator = require('validatorjs');
 const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Transaction, UserBalance } = require('../../models');
-const { installmentsDue } = require('../../helpers/lender/installmentsDue');
+const { calculateLendersDueAmount } = require('../../helpers/cron/CalculateLendersDueAmount');
 
 const receiveMoney = async (req, res) => {
     try {
@@ -47,15 +47,13 @@ const receiveMoney = async (req, res) => {
         });
 
         const ub = await UserBalance.findOne({ attributes: ['id', 'userId', 'amountReceived', 'totalAmount', 'remainingAmount', 'interest', 'period'] }, { where: { userId } });
-        const t = await Transaction.findOne({ attributes: ['date'], where: { userId, type: "borrowed" } });
 
         const simpleInterest = (ub.totalAmount * ub.interest * ub.period) / 100;
         const totalSum = parseInt(ub.totalAmount) + simpleInterest;
         const remainingAmount = totalSum - parseInt(amount);
 
-        const dueAmount = await installmentsDue(ub, t.date);
-
-        await UserBalance.update({ amountReceived: amount, remainingAmount, dueAmount }, { where: { userId } });
+        await UserBalance.update({ amountReceived: amount, remainingAmount }, { where: { userId } });
+        calculateLendersDueAmount();
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,

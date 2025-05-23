@@ -5,6 +5,8 @@ const { router } = require('./api/routes');
 const bodyParser = require('body-parser');
 const cors = require('cors');
 const { bootstrap } = require('./api/config/bootstrap.js');
+const { startCronJobs } = require('./api/config/cron/index.js');
+const { calculateLendersDueAmount } = require('./api/helpers/cron/CalculateLendersDueAmount.js');
 
 try {
     const app = express();
@@ -26,7 +28,9 @@ try {
     }));
 
     app.use('/', router);
+
     bootstrap();
+    startCronJobs();
 
     const PORT = process.env.PORT || 5000;
 
