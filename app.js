@@ -27,7 +27,11 @@ try {
     });
 
     app.use(cors({
-        origin: "http://localhost:5173",
+        origin: [
+            "https://money-management-front-pxvn3q0ig-jaydev-dwivedis-projects.vercel.app",
+            "https://money-management-front-end-jaydev-dwivedis-projects.vercel.app",
+            "https://money-management-front-end-pn8h.vercel.app"
+        ],
         methods: "GET,POST,PUT,DELETE",
         credentials: true
     }));
