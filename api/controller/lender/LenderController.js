@@ -115,8 +115,7 @@ const addLender = async (req, res) => {
             userId = newUser.id,
             amount = amountBorrowed,
             transactionType = "borrowed",
-            // date = Math.floor(Date.now() / 1000)
-            date = 1735689600
+            date = Math.floor(Date.now() / 1000);
 
         const transaction = await Transaction.create({
             userId,
