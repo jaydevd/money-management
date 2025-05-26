@@ -13,7 +13,7 @@ const bcrypt = require('bcrypt');
 const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Admin } = require('../../models');
-const { userInviteMail } = require('../../helpers/mail/UserInviteMail');
+const { inviteAdminMail } = require('../../helpers/mail/InviteAdmin');
 const { v4: uuidv4 } = require('uuid');
 const { sequelize } = require('../../config/database');
 
@@ -22,6 +22,7 @@ const inviteAdmin = async (req, res) => {
 
         const { email, name, surname, password } = req.body;
         const validationObj = req.body;
+        console.log('validationObj: ', validationObj);
 
         const validation = new Validator(validationObj, {
             name: VALIDATION_RULES.ADMIN.NAME,
@@ -61,9 +62,9 @@ const inviteAdmin = async (req, res) => {
 
         admin = await Admin.create({ email, name, surname, token, tokenExpiry, password: hashedPassword, createdAt, createdBy, isActive, isDeleted });
 
-        const url = `http://localhost:5173/admin/verify/${admin.id}/${token}`;
+        const url = `http://localhost:5173/admin/invite/verify/${admin.id}/${token}`;
 
-        await userInviteMail(name, email, url);
+        await inviteAdminMail(name, email, url, password);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
@@ -86,6 +87,7 @@ const inviteAdmin = async (req, res) => {
 const verifyAdmin = async (req, res) => {
     try {
         const { id, token } = req.params;
+        console.log('req.params: ', req.params);
 
         const validationObj = req.params;
         const validation = new Validator(validationObj, {

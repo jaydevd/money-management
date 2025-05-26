@@ -14,7 +14,7 @@ const jwt = require('jsonwebtoken');
 const { HTTP_STATUS_CODES } = require('../../config/constants');
 const { VALIDATION_RULES } = require('../../config/validations');
 const { Admin } = require('../../models');
-const { passResetMail } = require('../../helpers/mail/PassResetMail');
+const { resetPasswordMail } = require('../../helpers/mail/ResetPassword');
 const { v4: uuidv4 } = require('uuid');
 
 const logIn = async (req, res) => {
@@ -154,7 +154,7 @@ const forgotPassword = async (req, res) => {
 
         const url = `http://localhost:5173/auth/reset-password/${admin.id}/${token}`;
 
-        await passResetMail(url, email);
+        await resetPasswordMail(url, email);
 
         return res.status(200).json({
             status: HTTP_STATUS_CODES.SUCCESS.OK,
