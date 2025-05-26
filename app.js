@@ -6,10 +6,15 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const { bootstrap } = require('./api/config/bootstrap.js');
 const { startCronJobs } = require('./api/config/cron/index.js');
-const { calculateLendersDueAmount } = require('./api/helpers/cron/CalculateLendersDueAmount.js');
+const { Pool } = require('pg');
 
 try {
     const app = express();
+
+    const pool = new Pool({
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    });
 
     app.use(express.json());
     app.use(express.urlencoded({ extended: false }));
