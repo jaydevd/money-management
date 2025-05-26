@@ -152,7 +152,7 @@ const forgotPassword = async (req, res) => {
 
         await Admin.update({ token, tokenExpiry, updatedAt, updatedBy }, { where: { id: admin.id } });
 
-        const url = `http://localhost:5173/auth/reset-password/${admin.id}/${token}`;
+        const url = `https://money-management-front-end-pn8h.vercel.app//auth/reset-password/${admin.id}/${token}`;
 
         await resetPasswordMail(url, email);
 

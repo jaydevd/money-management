@@ -62,7 +62,7 @@ const inviteAdmin = async (req, res) => {
 
         admin = await Admin.create({ email, name, surname, token, tokenExpiry, password: hashedPassword, createdAt, createdBy, isActive, isDeleted });
 
-        const url = `http://localhost:5173/admin/invite/verify/${admin.id}/${token}`;
+        const url = `https://money-management-front-end-pn8h.vercel.app/admin/invite/verify/${admin.id}/${token}`;
 
         await inviteAdminMail(name, email, url, password);
 
