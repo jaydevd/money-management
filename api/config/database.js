@@ -1,10 +1,15 @@
 const { Sequelize } = require("sequelize");
 
-const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-    host: process.env.DB_HOST,
-    PORT: process.env.DB_PORT,
+const sequelize = new Sequelize(process.env.DB_URL, {
     dialect: process.env.DB_DIALECT,
-    logging: false
+    protocol: "postgres",
+    logging: false,
+    dialectOptions: {
+        ssl: {
+            require: true,
+            rejectUnauthorized: false, // Needed for Render's SSL
+        }
+    }
 });
 
 const connectDB = async () => {
@@ -14,7 +19,6 @@ const connectDB = async () => {
         console.error("Unable to connect the database.", error);
     }
 }
-
 connectDB();
 
 module.exports = { sequelize };
