@@ -26,12 +26,17 @@ try {
         console.error("Error syncing database:", err);
     });
 
+    // app.use(cors({
+    //     origin: [
+    //         "https://money-management-front-pxvn3q0ig-jaydev-dwivedis-projects.vercel.app",
+    //         "https://money-management-front-end-jaydev-dwivedis-projects.vercel.app",
+    //         "https://money-management-front-end-pn8h.vercel.app"
+    //     ],
+    //     methods: "GET,POST,PUT,DELETE",
+    //     credentials: true
+    // }));
     app.use(cors({
-        origin: [
-            "https://money-management-front-pxvn3q0ig-jaydev-dwivedis-projects.vercel.app",
-            "https://money-management-front-end-jaydev-dwivedis-projects.vercel.app",
-            "https://money-management-front-end-pn8h.vercel.app"
-        ],
+        origin: "http://localhost:5173",
         methods: "GET,POST,PUT,DELETE",
         credentials: true
     }));
